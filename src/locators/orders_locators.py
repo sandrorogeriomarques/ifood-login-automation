@@ -17,8 +17,5 @@ class OrdersLocators:
     CUSTOMER_NAME = (By.CSS_SELECTOR, 'span[type="name"]')
     DELIVERY_TIME = (By.CSS_SELECTOR, 'span[type="action"]')
     
-    # Botão de despachar
-    DISPATCH_BUTTON = (By.CSS_SELECTOR, '[data-tour-element="ORDER_DETAILS_DISPATCH_ACTION"]')
-    
     # Tooltip de pedido teste
     ORDER_TOOLTIP = (By.CLASS_NAME, "TooltipContent-sc-15tsulq-3")

@@ -85,20 +85,3 @@ class OrdersPage:
             print("\nMonitoramento de pedidos interrompido")
         except Exception as e:
             print(f"Erro no monitoramento de pedidos: {str(e)}")
-    
-    def dispatch_order(self, order_number: str) -> bool:
-        """Despacha um pedido específico."""
-        try:
-            # Encontra o card do pedido
-            order_cards = self.driver.find_elements(*self.locators.ORDER_CARD)
-            for card in order_cards:
-                number = card.find_element(*self.locators.ORDER_NUMBER).text
-                if number == order_number:
-                    # Encontra e clica no botão de despachar
-                    dispatch_button = card.find_element(*self.locators.DISPATCH_BUTTON)
-                    dispatch_button.click()
-                    return True
-            return False
-        except Exception as e:
-            print(f"Erro ao despachar pedido {order_number}: {str(e)}")
-            return False
