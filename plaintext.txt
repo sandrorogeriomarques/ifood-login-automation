@@ -1,0 +1,19 @@
+.
+├── gestor_pedidos/          # Diretório principal do projeto
+│   ├── __init__.py          # Torna este diretório um módulo Python
+│   ├── main.py              # Arquivo principal com o código de extração
+│   ├── config.py            # Configurações do projeto (e.g., URL, credenciais)
+│   ├── scraper.py           # Código de extração Selenium (separado para modularidade)
+│   ├── utils.py             # Funções auxiliares (e.g., salvamento de dados)
+│   └── requirements.txt     # Dependências do projeto
+│
+├── data/                    # Dados extraídos
+│   ├── pedidos.csv          # Dados salvos em CSV
+│
+├── logs/                    # Logs de execução
+│   ├── app.log              # Arquivo de log para depuração
+│
+├── tests/                   # Testes automatizados
+│   ├── test_scraper.py      # Testes para o código Selenium
+│
+└── README.md                # Documentação do projeto
