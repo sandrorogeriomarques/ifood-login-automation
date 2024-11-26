@@ -2,6 +2,7 @@
 import os
 import time
 from dotenv import load_dotenv
+from config.config import BASE_URL
 from src.utils.driver_factory import DriverFactory
 from src.pages.login_page import LoginPage
 from src.pages.orders_page import OrdersPage
@@ -21,11 +22,23 @@ def main():
     # Carrega variáveis de ambiente
     load_dotenv()
     email = os.getenv("IFOOD_EMAIL")
+    
+    if not email:
+        print("\nATENÇÃO: Email não encontrado no arquivo .env!")
+        email = input("Digite seu email: ")
 
+    driver = None
     try:
+        # Define o diretório para o perfil do Chrome
+        user_data_dir = os.path.join(os.path.expanduser("~"), "chrome-automation-profile")
+        print(f"Usando perfil do Chrome em: {user_data_dir}")
+        
         # Inicializa o driver
-        driver_factory = DriverFactory()
-        driver = driver_factory.get_driver()
+        driver = DriverFactory.create_chrome_driver(user_data_dir)
+        
+        # Navega para a página
+        print("Abrindo a página do iFood...")
+        driver.get(BASE_URL)
 
         # Faz login se necessário
         login_page = LoginPage(driver)
@@ -49,8 +62,9 @@ def main():
     except Exception as e:
         print(f"\nErro: {str(e)}")
     finally:
-        print("\nFechando navegador...")
-        driver.quit()
+        if driver:
+            print("\nFechando navegador...")
+            driver.quit()
 
 if __name__ == "__main__":
     main()
