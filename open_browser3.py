@@ -1,10 +1,16 @@
 """Script principal para automação do iFood Gestor de Pedidos."""
-import os
-import time
-from dotenv import load_dotenv
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 from config.config import BASE_URL
-from src.utils.driver_factory import DriverFactory
 from src.pages.login_page import LoginPage
+from src.utils.driver_factory import DriverFactory
+import os
+from dotenv import load_dotenv
+import time
 from src.pages.orders_page import OrdersPage
 
 def handle_new_orders(orders):
@@ -17,6 +23,143 @@ def handle_new_orders(orders):
         if order['is_test']:
             print(" Este é um pedido de teste!")
         print("-" * 50)
+
+def extrair_detalhes_pedido(driver, pedido):
+    try:
+        # Aguarda um momento para garantir que a página está estável
+        time.sleep(1)
+        
+        # Encontra a área clicável do pedido (evitando o botão de despachar)
+        area_clicavel = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'div[data-test-id="preparing-order-order-card"]'))
+        )
+        
+        # Rola até o elemento para garantir que está visível
+        driver.execute_script("arguments[0].scrollIntoView(true);", area_clicavel)
+        time.sleep(1)  # Pequena pausa após a rolagem
+        
+        # Tenta clicar usando JavaScript (mais confiável que o clique normal)
+        driver.execute_script("arguments[0].click();", area_clicavel)
+        
+        # Aguarda os detalhes aparecerem
+        time.sleep(2)  # Aguarda a animação de abertura
+        
+        try:
+            detalhes = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '[data-tour-element="ORDER_DETAILS_COSTUMER_DATA"]'))
+            )
+            
+            # Dicionário para armazenar os detalhes
+            info_pedido = {}
+            
+            # Tenta extrair cada informação individualmente com tratamento de erro
+            try:
+                localizador = detalhes.find_element(By.CSS_SELECTOR, '[data-test-id="localizer-id"]')
+                info_pedido['localizador'] = localizador.text if localizador else "Não encontrado"
+            except:
+                info_pedido['localizador'] = "Não disponível"
+            
+            try:
+                horario = detalhes.find_element(By.CSS_SELECTOR, '.sc-bXMzgG.figlin')
+                info_pedido['horario_pedido'] = horario.text if horario else "Não encontrado"
+            except:
+                info_pedido['horario_pedido'] = "Não disponível"
+            
+            try:
+                telefone_element = detalhes.find_element(By.CSS_SELECTOR, '.ifdl-icon-telephone').find_element(By.XPATH, '..')
+                info_pedido['telefone'] = telefone_element.text if telefone_element else "Não encontrado"
+            except:
+                info_pedido['telefone'] = "Não disponível"
+            
+            try:
+                endereco_element = detalhes.find_element(By.CSS_SELECTOR, '.sc-dUOoGL.fMPdzP')
+                info_pedido['endereco'] = endereco_element.text if endereco_element else "Não encontrado"
+            except:
+                info_pedido['endereco'] = "Não disponível"
+            
+            try:
+                status_element = detalhes.find_element(By.CSS_SELECTOR, '.mVuiT')
+                info_pedido['status'] = status_element.text if status_element else "Não encontrado"
+            except:
+                info_pedido['status'] = "Não disponível"
+            
+            try:
+                horario_status = detalhes.find_element(By.CSS_SELECTOR, '.bfkxsF')
+                info_pedido['horario_status'] = horario_status.text if horario_status else "Não encontrado"
+            except:
+                info_pedido['horario_status'] = "Não disponível"
+            
+            return info_pedido
+            
+        except Exception as e:
+            print(f"Erro ao extrair informações detalhadas: {str(e)}")
+            return None
+            
+    except Exception as e:
+        print(f"Erro ao clicar no pedido: {str(e)}")
+        return None
+
+def monitorar_novos_pedidos(driver):
+    print("\nMonitorando novos pedidos...")
+    pedidos_processados = set()
+    
+    while True:
+        try:
+            # Procura por novos pedidos na seção "Em preparo"
+            pedidos = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, '[data-test-id="preparing-order-order-card"]'))
+            )
+            
+            for pedido in pedidos:
+                try:
+                    # Pega o número do pedido
+                    numero_pedido = pedido.find_element(By.CSS_SELECTOR, '[type="order"]').text
+                    
+                    # Se já processamos este pedido, pula
+                    if numero_pedido in pedidos_processados:
+                        continue
+                    
+                    # Pega as informações básicas do pedido
+                    try:
+                        nome_cliente = pedido.find_element(By.CSS_SELECTOR, '[type="name"]').text
+                    except:
+                        nome_cliente = "Nome não disponível"
+                        
+                    try:
+                        tempo_entrega = pedido.find_element(By.CSS_SELECTOR, '[type="action"]').text
+                    except:
+                        tempo_entrega = "Tempo não disponível"
+                    
+                    print("\n=== NOVO PEDIDO DETECTADO ===")
+                    print(f"Número do Pedido: {numero_pedido}")
+                    print(f"Nome do Cliente: {nome_cliente}")
+                    print(f"Tempo de Entrega: {tempo_entrega}")
+                    
+                    # Extrai detalhes adicionais do pedido
+                    detalhes = extrair_detalhes_pedido(driver, pedido)
+                    if detalhes:
+                        print("\n=== DETALHES DO PEDIDO ===")
+                        print(f"Localizador: {detalhes['localizador']}")
+                        print(f"Horário do Pedido: {detalhes['horario_pedido']}")
+                        print(f"Telefone: {detalhes['telefone']}")
+                        print(f"Endereço: {detalhes['endereco']}")
+                        print(f"Status: {detalhes['status']}")
+                        print(f"Horário do Status: {detalhes['horario_status']}")
+                    
+                    print("============================")
+                    
+                    # Marca o pedido como processado
+                    pedidos_processados.add(numero_pedido)
+                    
+                except Exception as e:
+                    print(f"Erro ao processar pedido: {str(e)}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Erro ao buscar pedidos: {str(e)}")
+        
+        # Aguarda antes de verificar novamente
+        time.sleep(5)
 
 def main():
     # Carrega variáveis de ambiente
@@ -98,8 +241,7 @@ def main():
         print("Pressione Ctrl+C para interromper")
         print("-" * 50)
 
-        orders_page = OrdersPage(driver)
-        orders_page.watch_for_new_orders(handle_new_orders)
+        monitorar_novos_pedidos(driver)
 
     except KeyboardInterrupt:
         print("\nMonitoramento interrompido pelo usuário")
