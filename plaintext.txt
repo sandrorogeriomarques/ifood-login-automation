@@ -1,19 +1,73 @@
+# Estrutura do Projeto iFood Gestor de Pedidos - Automação
+
 .
-├── gestor_pedidos/          # Diretório principal do projeto
-│   ├── __init__.py          # Torna este diretório um módulo Python
-│   ├── main.py              # Arquivo principal com o código de extração
-│   ├── config.py            # Configurações do projeto (e.g., URL, credenciais)
-│   ├── scraper.py           # Código de extração Selenium (separado para modularidade)
-│   ├── utils.py             # Funções auxiliares (e.g., salvamento de dados)
-│   └── requirements.txt     # Dependências do projeto
-│
-├── data/                    # Dados extraídos
-│   ├── pedidos.csv          # Dados salvos em CSV
-│
-├── logs/                    # Logs de execução
-│   ├── app.log              # Arquivo de log para depuração
-│
-├── tests/                   # Testes automatizados
-│   ├── test_scraper.py      # Testes para o código Selenium
-│
-└── README.md                # Documentação do projeto
+├── gestor_pedidos/              # Diretório principal do projeto
+│   ├── config/                  # Configurações do projeto
+│   │   ├── __init__.py
+│   │   └── config.py           # Configurações centralizadas (URLs, etc)
+│   │
+│   ├── src/                    # Código fonte principal
+│   │   ├── __init__.py
+│   │   ├── locators/          # Elementos e seletores das páginas
+│   │   │   └── login_locators.py
+│   │   ├── pages/             # Classes de Page Objects
+│   │   │   └── login_page.py
+│   │   └── utils/             # Utilitários e helpers
+│   │       ├── __init__.py
+│   │       └── driver_factory.py
+│   │
+│   ├── tests/                 # Testes automatizados
+│   │   ├── conftest.py       # Configurações do pytest
+│   │   └── test_login_page.py
+│   │
+│   ├── .env                   # Variáveis de ambiente (não versionado)
+│   ├── .gitignore            # Configuração do Git
+│   ├── README.md             # Documentação do projeto
+│   ├── open_browser3.py      # Script principal de automação
+│   └── requirements.txt      # Dependências do projeto
+
+# Principais Componentes
+
+1. config/
+   - Configurações centralizadas do projeto
+   - URLs e outras constantes
+
+2. src/locators/
+   - Seletores CSS/XPath para elementos da página
+   - Organizados por página/funcionalidade
+
+3. src/pages/
+   - Implementação do Page Object Model
+   - Classes para interação com páginas
+
+4. src/utils/
+   - Fábrica do WebDriver
+   - Funções auxiliares
+
+5. tests/
+   - Testes automatizados
+   - Configurações do pytest
+
+# Arquivos Principais
+
+- open_browser3.py: Script principal que orquestra a automação
+- .env: Armazena credenciais (email)
+- requirements.txt: Lista de dependências Python
+- README.md: Documentação completa do projeto
+
+# Funcionalidades Implementadas
+
+1. Login Automatizado
+   - Preenchimento de email
+   - Suporte a verificação em duas etapas
+   - Detecção automática de estado de login
+
+2. Gestão de Sessão
+   - Perfil persistente do Chrome
+   - Detecção de estado de login
+   - Tratamento de sessão expirada
+
+3. Segurança
+   - Credenciais em arquivo .env
+   - Perfil isolado do Chrome
+   - Exclusão de arquivos sensíveis do Git
