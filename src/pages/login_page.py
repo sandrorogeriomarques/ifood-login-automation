@@ -8,6 +8,51 @@ class LoginPage:
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(driver, 10)
+        self.short_wait = WebDriverWait(driver, 3)  # Espera curta para verificações rápidas
+    
+    def is_logged_in(self):
+        """Verifica se o usuário está logado"""
+        try:
+            # Tenta encontrar elementos que só aparecem quando logado
+            self.short_wait.until(
+                EC.presence_of_element_located(LoginLocators.MAIN_CONTENT)
+            )
+            return True
+        except TimeoutException:
+            return False
+    
+    def needs_login(self):
+        """Verifica se é necessário fazer login"""
+        try:
+            # Tenta encontrar o formulário de login
+            self.short_wait.until(
+                EC.presence_of_element_located(LoginLocators.LOGIN_FORM)
+            )
+            return True
+        except TimeoutException:
+            return False
+    
+    def wait_for_login_state(self):
+        """Aguarda e verifica o estado do login"""
+        print("Verificando estado do login...")
+        
+        # Primeiro verifica se já está logado
+        if self.is_logged_in():
+            print("Usuário já está logado!")
+            return "logged_in"
+        
+        # Se não está logado, verifica se precisa fazer login
+        if self.needs_login():
+            print("Formulário de login detectado.")
+            return "needs_login"
+        
+        # Se não está logado e não tem form de login, pode ser OTP
+        if self.is_otp_step_present():
+            print("Verificação em duas etapas detectada.")
+            return "needs_otp"
+        
+        print("Estado de login indefinido.")
+        return "unknown"
     
     def enter_email(self, email):
         """Insere o email no campo de login"""
@@ -34,31 +79,11 @@ class LoginPage:
     def is_otp_step_present(self):
         """Verifica se está na etapa de verificação OTP"""
         try:
-            print("Verificando se existe verificação em duas etapas...")
-            
-            # Tenta encontrar o div principal do OTP
-            otp_div = self.wait.until(
+            self.short_wait.until(
                 EC.presence_of_element_located(LoginLocators.OTP_STEP_DIV)
             )
-            
-            # Se encontrou, tenta pegar o texto do subtítulo
-            try:
-                subtitle = self.driver.find_element(*LoginLocators.OTP_SUBTITLE)
-                print(f"Encontrado subtítulo OTP: {subtitle.text}")
-            except NoSuchElementException:
-                print("Subtítulo OTP não encontrado")
-            
-            # Verifica se os campos de input estão presentes
-            otp_inputs = self.driver.find_elements(*LoginLocators.OTP_INPUTS)
-            print(f"Número de campos OTP encontrados: {len(otp_inputs)}")
-            
             return True
-            
         except TimeoutException:
-            print("Tela de verificação em duas etapas não encontrada")
-            return False
-        except Exception as e:
-            print(f"Erro ao verificar tela OTP: {str(e)}")
             return False
     
     def enter_otp_code(self, code):
